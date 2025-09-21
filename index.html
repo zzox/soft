@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>metablood</title>
+  <title>soft</title>
   <style type="css">
 
   </style>
@@ -27,8 +27,13 @@
     canvas.style.height = '512px'
     canvas.style.imageRendering = 'pixelated'
 
-    ctx.fillStyle = 'black'
-    ctx.fillRect(0, 0, 64, 64)
+    // ctx.fillStyle = 'black'
+    // ctx.fillRect(0, 0, 64, 64)
+
+    // make black instead of transparent by making alpha 255
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        imageData.data[i + 3] = 255
+    }
 
     setPixel(imageData, 31, 56, [255, 0, 255, 255])
 
