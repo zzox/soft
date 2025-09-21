@@ -16,11 +16,11 @@
     const imageData = ctx.createImageData(64, 64)
 
     const setPixel = (imageData, x, y, [b, g, r, a]) => {
-        console.log(imageData)
-        imageData.data[y * imageData.width * 4 + x * 4] = b
-        imageData.data[y * imageData.width * 4 + x * 4 + 1] = g
-        imageData.data[y * imageData.width * 4 + x * 4 + 2] = r
-        imageData.data[y * imageData.width * 4 + x * 4 + 3] = a
+        // are parens necessary?
+        imageData.data[(y * imageData.width * 4) + (x * 4)] = b
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = g
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
     }
 
     canvas.style.width = '512px'
@@ -35,7 +35,50 @@
         imageData.data[i + 3] = 255
     }
 
-    setPixel(imageData, 31, 56, [255, 0, 255, 255])
+    // from round 4 of optimizations here: https://haqr.eu/tinyrenderer/bresenham/
+    // TODO: do my own testing
+    const drawLine = (x1, y1, x2, y2, /* TGAImage &framebuffer, */ color) => {
+        // const [b, g, r, a] = color
+
+        // if the line is steep, we transpose the image
+        const steep = Math.abs(x1 - x2) < Math.abs(y1 - y2)
+        if (steep) {
+            const temp1 = x1
+            x1 = y1
+            y1 = temp
+
+            const temp2 = x2
+            x2 = y2
+            y2 = temp2
+        }
+
+        // make it left−to−right
+        if (x1 > x2) {
+            const temp1 = x1
+            x1 = x2
+            x2 = temp1
+
+            const temp2 = y1
+            y1 = y2
+            y2 = temp2
+        }
+
+        let y = y1;
+        let ierror = 0;
+        for (let x = x1; x <= x2; x++) {
+            if (steep) // if transposed, de−transpose
+                setPixel(imageData, x, x, color);
+            else
+                setPixel(imageData, x, y, color);
+            ierror += 2 * Math.abs(y2 - y1)
+            y += (y2 > y1 ? 1 : -1) * (ierror > x2 - x1)
+            ierror -= 2 * (x2 - x1) * (ierror > x2 - x1)
+        }
+    }
+
+    // setPixel(imageData, 31, 56, [255, 0, 255, 255])
+
+    drawLine(2, 4, 55, 53, [255, 0, 255, 255])
 
     ctx.putImageData(imageData, 0, 0)
   </script>
