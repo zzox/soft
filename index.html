@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>metablood</title>
+  <style type="css">
+
+  </style>
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+  <canvas width="64" height="64" id="main-canvas"></canvas>
+  <script>
+    const canvas = document.querySelector('canvas')
+    const ctx = canvas.getContext('2d')
+    const imageData = ctx.createImageData(64, 64)
+
+    const setPixel = (imageData, x, y, [b, g, r, a]) => {
+        console.log(imageData)
+        imageData.data[y * imageData.width * 4 + x * 4] = b
+        imageData.data[y * imageData.width * 4 + x * 4 + 1] = g
+        imageData.data[y * imageData.width * 4 + x * 4 + 2] = r
+        imageData.data[y * imageData.width * 4 + x * 4 + 3] = a
+    }
+
+    canvas.style.width = '512px'
+    canvas.style.height = '512px'
+    canvas.style.imageRendering = 'pixelated'
+
+    ctx.fillStyle = 'black'
+    ctx.fillRect(0, 0, 64, 64)
+
+    setPixel(imageData, 31, 56, [255, 0, 255, 255])
+
+    ctx.putImageData(imageData, 0, 0)
+  </script>
+</body>
+</html>
