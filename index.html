@@ -11,6 +11,7 @@
 <body>
   <canvas width="512" height="512" id="main-canvas"></canvas>
   <script>
+    console.time('full')
     const canvas = document.querySelector('canvas')
     const ctx = canvas.getContext('2d')
     const imageData = ctx.createImageData(512, 512)
@@ -106,17 +107,11 @@
         }
     }
 
-    // setPixel(imageData, 31, 56, [255, 0, 255, 255])
-
-    // drawLine(2, 4, 55, 53, [255, 0, 255, 255])
-
-    const { verticies, faces } = parseObj(getObj())
-
-    console.log(verticies, faces)
+    const wglFlipY = (val) => -val + height
 
     const project = ([x, y, z]) => {
         // normalize and scale
-        return [Math.floor((x + 1) * width / 2), Math.floor((y + 1) * height / 2)]
+        return [Math.floor((x + 1) * width / 2), wglFlipY(Math.floor((y + 1) * height / 2))]
     }
 
     const drawFace = ([vr1, vr2, vr3]) => {
@@ -135,11 +130,20 @@
         setPixel(v[0], v[1], white)
     }
 
+    console.time('parse')
+    const { verticies, faces } = parseObj(getObj())
+    console.timeEnd('parse')
+    console.log(verticies, faces)
+
     faces.map(drawFace)
 
     verticies.forEach(putPixel)
 
+    console.time('put')
     ctx.putImageData(imageData, 0, 0)
+    console.timeEnd('put')
+
+    console.timeEnd('full')
 
     function getObj () {
         return `v 0.11526 0.700717 0.0677257
