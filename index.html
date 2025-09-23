@@ -72,6 +72,10 @@
         }
     }
 
+    const swap = (p1, p2) => {
+        return [p2, p1]
+    }
+
     // from round 4 of optimizations here: https://haqr.eu/tinyrenderer/bresenham/
     // TODO: do my own testing
     const drawLine = (x1, y1, x2, y2, /* TGAImage &framebuffer, */ color) => {
@@ -80,24 +84,14 @@
         // if the line is steep, we transpose the image
         const steep = Math.abs(x1 - x2) < Math.abs(y1 - y2)
         if (steep) {
-            const temp1 = x1
-            x1 = y1
-            y1 = temp1
-
-            const temp2 = x2
-            x2 = y2
-            y2 = temp2
+            ;[x1, y1] = swap(x1, y1)
+            ;[x2, y2] = swap(x2, y2)
         }
 
         // make it left−to−right
         if (x1 > x2) {
-            const temp1 = x1
-            x1 = x2
-            x2 = temp1
-
-            const temp2 = y1
-            y1 = y2
-            y2 = temp2
+            ;[x1, x2] = swap(x1, x2)
+            ;[y1, y2] = swap(y1, y2)
         }
 
         let y = y1
