@@ -139,26 +139,24 @@
         }
     }
 
-    const drawTriangle = (x1, y1, x2, y2, x3, y3, color) => {
-        let minX = width
-        let maxX = 0
-        let minY = height
-        let maxY = 0
-        if (x1 < minX) minX = x1
-        if (x1 > maxX) maxX = x1
-        if (y1 < minY) minY = y1
-        if (y1 > maxY) maxY = y1
-        if (x2 < minX) minX = x2
-        if (x2 > maxX) maxX = x2
-        if (y2 < minY) minY = y2
-        if (y2 > maxY) maxY = y2
-        if (x3 < minX) minX = x3
-        if (x3 > maxX) maxX = x3
-        if (y3 < minY) minY = y3
-        if (y3 > maxY) maxY = y3
+    const signedTriangleArea = (x1, y1, x2, y2, x3, y3) => {
+        return .5 * ((y2 - y1) * (x2 + x1) + (y3 - y2) * (x3 + x2) + (y1 - y3) * (x1 + x3));
+    }
 
-        for (let x = minX; x < maxX; x++) {
-            for (let y = minY; y < maxY; y++) {
+    const drawTriangle = (x1, y1, x2, y2, x3, y3, color) => {
+        const minX = Math.min(Math.min(x1, x2), x3)
+        const maxX = Math.max(Math.max(x1, x2), x3)
+        const minY = Math.min(Math.min(y1, y2), y3)
+        const maxY = Math.max(Math.max(y1, y2), y3)
+
+        const totalArea = signedTriangleArea(x1, y1, x2, y2, x3, y3)
+
+        for (let x = minX; x <= maxX; x++) {
+            for (let y = minY; y <= maxY; y++) {
+                const alpha = signedTriangleArea(x, y, x2, y2, x3, y3) / totalArea
+                const beta = signedTriangleArea(x, y, x3, y3, x1, y1) / totalArea
+                const gamma = signedTriangleArea(x, y, x1, y1, x2, y2) / totalArea
+                if (alpha < 0 || beta < 0 || gamma < 0) continue
                 setPixel(x, y, color)
             }
         }
