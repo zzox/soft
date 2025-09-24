@@ -140,9 +140,32 @@
     }
 
     const drawTriangle = (x1, y1, x2, y2, x3, y3, color) => {
-        drawLine(x1, y1, x2, y2, color)
-        drawLine(x2, y2, x3, y3, color)
-        drawLine(x3, y3, x1, y1, color)
+        let minX = width
+        let maxX = 0
+        let minY = height
+        let maxY = 0
+        if (x1 < minX) minX = x1
+        if (x1 > maxX) maxX = x1
+        if (y1 < minY) minY = y1
+        if (y1 > maxY) maxY = y1
+        if (x2 < minX) minX = x2
+        if (x2 > maxX) maxX = x2
+        if (y2 < minY) minY = y2
+        if (y2 > maxY) maxY = y2
+        if (x3 < minX) minX = x3
+        if (x3 > maxX) maxX = x3
+        if (y3 < minY) minY = y3
+        if (y3 > maxY) maxY = y3
+
+        for (let x = minX; x < maxX; x++) {
+            for (let y = minY; y < maxY; y++) {
+                setPixel(x, y, color)
+            }
+        }
+
+        // drawLine(x1, y1, x2, y2, color)
+        // drawLine(x2, y2, x3, y3, color)
+        // drawLine(x3, y3, x1, y1, color)
     }
 
     const drawFace = ([vr1, vr2, vr3], color) => {
@@ -164,9 +187,9 @@
     // console.timeEnd('parse')
     // console.log(verticies, faces)
 
-    drawTriangleScanline(  7, 45, 35, 100, 45,  60, red)
-    drawTriangleScanline(120, 35, 90,   5, 45, 110, white)
-    drawTriangleScanline(115, 83, 80,  90, 85, 120, green)
+    drawTriangle(  7, 45, 35, 100, 45,  60, red)
+    drawTriangle(120, 35, 90,   5, 45, 110, white)
+    drawTriangle(115, 83, 80,  90, 85, 120, green)
 
     // faces.map(drawFace)
 
