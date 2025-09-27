@@ -46,6 +46,12 @@
         imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
         imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
 
+        // funny colors
+        // imageData.data[(y * imageData.width * 4) + (x * 4)] = Math.floor(b * (1 - (a / 255)))
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = Math.floor(g * (0.5 + (a / 128)))
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = Math.floor(r * a / 255)
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
+
         // instead of setting alpha, we set a instead of
         // imageData.data[(y * imageData.width * 4) + (x * 4)] = Math.floor(b * (a / 255))
         // imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = Math.floor(g * (a / 255))
@@ -179,10 +185,28 @@
                 const gamma = signedTriangleArea(x, y, x1, y1, x2, y2) / totalArea
                 if (alpha < 0 || beta < 0 || gamma < 0) continue
                 color[3] = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
+                // colorful triangle
+                // setPixel(x, y, [Math.floor(255 * alpha), Math.floor(255 * beta), Math.floor(255 * gamma), 255])
                 setPixel(x, y, color)
                 // color[3] = 255
             }
         }
+
+        // draw wireframes
+        // for (let x = minX; x <= maxX; x++) {
+        //     for (let y = minY; y <= maxY; y++) {
+        //         const alpha = signedTriangleArea(x, y, x2, y2, x3, y3) / totalArea
+        //         const beta = signedTriangleArea(x, y, x3, y3, x1, y1) / totalArea
+        //         const gamma = signedTriangleArea(x, y, x1, y1, x2, y2) / totalArea
+        //         if (alpha > 0 && beta > 0 && gamma > 0) {
+        //             if (alpha < 0.1 || beta < 0.1 || gamma < 0.1) {
+        //                 color[3] = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
+        //                 setPixel(x, y, color)
+        //             }
+        //         }
+        //         // color[3] = 255
+        //     }
+        // }
 
         // drawLine(x1, y1, x2, y2, color)
         // drawLine(x2, y2, x3, y3, color)
