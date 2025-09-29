@@ -21,12 +21,20 @@
     canvas.style.backgroundColor = 'black'
 
     // all colors are black
-    for (let i = 0; i < 64 * 64; i++) {
-        imageData.data[i] = 0;
-        imageData.data[i + 1] = 0;
-        imageData.data[i + 2] = 0;
-        imageData.data[i + 3] = 255;
-    }
+    // for (let i = 0; i < 64 * 64; i++) {
+    //     imageData.data[i] = 0;
+    //     imageData.data[i + 1] = 0;
+    //     imageData.data[i + 2] = 0;
+    //     imageData.data[i + 3] = 255;
+    // }
+
+    // int 8 array doesn't work because we end up too close to the cam and Int8Array are signed ints
+    const zBuffer = new Int16Array(width * height)
+    console.log('zBuffer length', zBuffer.length)
+
+    const getZBuffer = (x, y) => zBuffer[y * width + x]
+
+    const setZBuffer = (x, y, z) => { zBuffer[y * width + x] = z }
 
     const pink = [255, 0, 255, 255]
     const white = [255, 255, 255, 255]
@@ -41,16 +49,16 @@
         // are parens necessary?
         y = wglFlipY(y)
 
-        // imageData.data[(y * imageData.width * 4) + (x * 4)] = b
-        // imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = g
-        // imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
-        // imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
+        imageData.data[(y * imageData.width * 4) + (x * 4)] = b
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = g
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
 
         // zbuffer
-        imageData.data[(y * imageData.width * 4) + (x * 4)] = a
-        imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = a
-        imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = a
-        imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
+        // imageData.data[(y * imageData.width * 4) + (x * 4)] = a
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = a
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = a
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
 
         // funny colors
         // imageData.data[(y * imageData.width * 4) + (x * 4)] = Math.floor(b * (1 - (a / 255)))
@@ -190,11 +198,15 @@
                 const beta = signedTriangleArea(x, y, x3, y3, x1, y1) / totalArea
                 const gamma = signedTriangleArea(x, y, x1, y1, x2, y2) / totalArea
                 if (alpha < 0 || beta < 0 || gamma < 0) continue
-                color[3] = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
+                const z = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
+                color[3] = z
                 // colorful triangle
                 // setPixel(x, y, [Math.floor(255 * alpha), Math.floor(255 * beta), Math.floor(255 * gamma), 255])
                 // console.log(x, y)
 
+                if (z <= getZBuffer(x, y)) continue
+
+                setZBuffer(x, y, z)
                 setPixel(x, y, color)
                 // color[3] = 255
             }
