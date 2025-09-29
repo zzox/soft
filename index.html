@@ -41,10 +41,16 @@
         // are parens necessary?
         y = wglFlipY(y)
 
-        imageData.data[(y * imageData.width * 4) + (x * 4)] = b
-        imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = g
-        imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
-        imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
+        // imageData.data[(y * imageData.width * 4) + (x * 4)] = b
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = g
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
+        // imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
+
+        // zbuffer
+        imageData.data[(y * imageData.width * 4) + (x * 4)] = a
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = a
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = a
+        imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
 
         // funny colors
         // imageData.data[(y * imageData.width * 4) + (x * 4)] = Math.floor(b * (1 - (a / 255)))
@@ -133,7 +139,7 @@
 
     const project = ([x, y, z]) => {
         // normalize and scale
-        return [Math.floor((x + 1) * width / 2), Math.floor((y + 1) * height / 2), Math.floor((z + 1) * width / 2)]
+        return [Math.floor((x + 1) * width / 2), Math.floor((y + 1) * height / 2), Math.floor((z + 1) * 255 / 2)]
         // return [Math.floor((x + 1) * width / 2), wglFlipY(Math.floor((y + 1) * height / 2))]
     }
 
@@ -176,7 +182,7 @@
 
         const totalArea = signedTriangleArea(x1, y1, x2, y2, x3, y3)
         // console.log(totalArea)
-        if (totalArea < 1) return
+        if (totalArea < 1) return // backface culling + discarding triangles that cover less than a pixel
 
         for (let x = minX; x <= maxX; x++) {
             for (let y = minY; y <= maxY; y++) {
@@ -184,7 +190,7 @@
                 const beta = signedTriangleArea(x, y, x3, y3, x1, y1) / totalArea
                 const gamma = signedTriangleArea(x, y, x1, y1, x2, y2) / totalArea
                 if (alpha < 0 || beta < 0 || gamma < 0) continue
-                // color[3] = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
+                color[3] = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
                 // colorful triangle
                 // setPixel(x, y, [Math.floor(255 * alpha), Math.floor(255 * beta), Math.floor(255 * gamma), 255])
                 // console.log(x, y)
@@ -240,15 +246,16 @@
     // drawTriangle(120, 35, 90,   5, 45, 110, white)
     // drawTriangle(115, 83, 80,  90, 85, 120, green)
 
-    faces.sort(([a1, a2, a3], [b1, b2, b3]) => {
-        const v1 = project(verticies[a1 - 1])
-        const v2 = project(verticies[a2 - 1])
-        const v3 = project(verticies[a3 - 1])
-        const w1 = project(verticies[b1 - 1])
-        const w2 = project(verticies[b2 - 1])
-        const w3 = project(verticies[b3 - 1])
-        return (v1[2] + v2[2] + v3[2]) - (w1[2] + w2[2] + v3[2])
-    })
+    // sort faces (render back to front)
+    // faces.sort(([a1, a2, a3], [b1, b2, b3]) => {
+    //     const v1 = project(verticies[a1 - 1])
+    //     const v2 = project(verticies[a2 - 1])
+    //     const v3 = project(verticies[a3 - 1])
+    //     const w1 = project(verticies[b1 - 1])
+    //     const w2 = project(verticies[b2 - 1])
+    //     const w3 = project(verticies[b3 - 1])
+    //     return (v1[2] + v2[2] + v3[2]) - (w1[2] + w2[2] + v3[2])
+    // })
 
     faces.map(drawFace)
 
