@@ -1,11 +1,23 @@
 console.time('full')
 const width = 512
 const height = 512
-const canvas = document.querySelector('canvas')
+const canvas = document.querySelector('#main-canvas')
 const ctx = canvas.getContext('2d')
 const imageData = ctx.createImageData(width, height)
-
 canvas.style.backgroundColor = 'black'
+
+const bufferCanvas = document.querySelector('#buffer-canvas')
+const ctx2 = bufferCanvas.getContext('2d')
+const bufferData = ctx2.createImageData(width, height)
+bufferCanvas.style.backgroundColor = 'black'
+
+canvas.style.width = `512px`
+canvas.style.height = `512px`
+canvas.style.imageRendering = 'pixelated'
+
+bufferCanvas.style.width = `512px`
+bufferCanvas.style.height = `512px`
+bufferCanvas.style.imageRendering = 'pixelated'
 
 // all colors are black
 // for (let i = 0; i < 64 * 64; i++) {
@@ -33,19 +45,13 @@ const yellow = [255, 200, 0, 255]
 const wglFlipY = (val) => -val + height
 
 const setPixel = (x, y, [b, g, r, a]) => {
-    // are parens necessary?
     y = wglFlipY(y)
 
+    // are parens necessary?
     imageData.data[(y * imageData.width * 4) + (x * 4)] = b
     imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = g
     imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = r
-    imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = a
-
-    // zbuffer
-    // imageData.data[(y * imageData.width * 4) + (x * 4)] = a
-    // imageData.data[(y * imageData.width * 4) + (x * 4) + 1] = a
-    // imageData.data[(y * imageData.width * 4) + (x * 4) + 2] = a
-    // imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
+    imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
 
     // funny colors
     // imageData.data[(y * imageData.width * 4) + (x * 4)] = Math.floor(b * (1 - (a / 255)))
@@ -60,9 +66,14 @@ const setPixel = (x, y, [b, g, r, a]) => {
     // imageData.data[(y * imageData.width * 4) + (x * 4) + 3] = 255
 }
 
-canvas.style.width = `512px`
-canvas.style.height = `512px`
-canvas.style.imageRendering = 'pixelated'
+const setZPixel = (x, y, [b, g, r, a]) => {
+    y = wglFlipY(y)
+    // zbuffer
+    bufferData.data[(y * bufferData.width * 4) + (x * 4)] = a
+    bufferData.data[(y * bufferData.width * 4) + (x * 4) + 1] = a
+    bufferData.data[(y * bufferData.width * 4) + (x * 4) + 2] = a
+    bufferData.data[(y * bufferData.width * 4) + (x * 4) + 3] = 255
+}
 
 // ctx.fillStyle = 'black'
 // ctx.fillRect(0, 0, 64, 64)
@@ -169,7 +180,7 @@ const signedTriangleArea = (x1, y1, x2, y2, x3, y3) => {
     return .5 * ((y2 - y1) * (x2 + x1) + (y3 - y2) * (x3 + x2) + (y1 - y3) * (x1 + x3));
 }
 
-const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color) => {
+const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color, forZBuffer) => {
     const minX = Math.min(Math.min(x1, x2), x3)
     const maxX = Math.max(Math.max(x1, x2), x3)
     const minY = Math.min(Math.min(y1, y2), y3)
@@ -194,7 +205,11 @@ const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color) => {
             if (z <= getZBuffer(x, y)) continue
 
             setZBuffer(x, y, z)
-            setPixel(x, y, color)
+            if (forZBuffer) {
+                setZPixel(x, y, color)
+            } else {
+                setPixel(x, y, color)
+            }
             // color[3] = 255
         }
     }
@@ -220,7 +235,7 @@ const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color) => {
     // drawLine(x3, y3, x1, y1, color)
 }
 
-const drawFace = (verticies, [vr1, vr2, vr3]) => {
+const drawFace = (verticies, [vr1, vr2, vr3], zBuffer = false) => {
     // - 1 because the verticies are 1-indexed, not 0
     const v1 = project(verticies[vr1 - 1])
     const v2 = project(verticies[vr2 - 1])
@@ -228,7 +243,7 @@ const drawFace = (verticies, [vr1, vr2, vr3]) => {
 
     const color = [pink, white, green, red, blue, yellow][Math.floor(Math.random() * 6)]
 
-    drawTriangle(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], v3[0], v3[1], v3[2], color)
+    drawTriangle(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], v3[0], v3[1], v3[2], color, zBuffer)
 }
 
 const putPixel = (vertex) => {
@@ -261,11 +276,14 @@ window.onload = async () => {
     console.log(verticies, faces)
 
     faces.map((face) => drawFace(verticies, face))
+    zBuffer.fill(0) // clear zBuffer
+    faces.map((face) => drawFace(verticies, face, true))
 
     // verticies.forEach(putPixel)
 
     console.time('put')
     ctx.putImageData(imageData, 0, 0)
+    ctx2.putImageData(bufferData, 0, 0)
     console.timeEnd('put')
 
     console.timeEnd('full')
