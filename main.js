@@ -89,6 +89,13 @@ const parseObj = (obj) => {
     }
 }
 
+// const rotate = (point) => {
+//     const a = Math.PI / 6;
+//     const ry = new Matrix3(Math.cos(a),0,Math.sin(a), 0,1,0, -Math.sin(a),0,Math.cos(a))
+//     return ry * point;
+//     // return point
+// }
+
 const project = (point) => {
     // normalize and scale
     return new Vec3(Math.floor((point.x + 1) * width / 2), Math.floor((point.y + 1) * height / 2), Math.floor((point.z + 1) * 255 / 2))
@@ -150,7 +157,7 @@ const putPixel = (vertex) => {
 }
 
 window.onload = async () => {
-    const answer = await fetch('./diablo-3-pose.obj')
+    const answer = await fetch('./african-head.obj')
     const text = await answer.text()
 
     console.time('parse')
