@@ -95,6 +95,14 @@ const rotate = (point) => {
     return vecMat3(point, ry)
 }
 
+const persp = (point) => {
+    const c = 3.0 // lower is more fisheye-like, don't go below 1
+    const it = (1 - point.z / c)
+    return new Vec3(
+        point.x / it, point.y / it, point.z / it
+    )
+}
+
 const project = (point) => {
     // normalize and scale
     return new Vec3(Math.floor((point.x + 1) * width / 2), Math.floor((point.y + 1) * height / 2), Math.floor((point.z + 1) * 255 / 2))
@@ -141,9 +149,9 @@ const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color, forZBuffer) => 
 
 const drawFace = (verticies, [vr1, vr2, vr3], zBuffer = false) => {
     // - 1 because the verticies are 1-indexed, not 0
-    const v1 = project(rotate(verticies[vr1 - 1]))
-    const v2 = project(rotate(verticies[vr2 - 1]))
-    const v3 = project(rotate(verticies[vr3 - 1]))
+    const v1 = project(persp(rotate(verticies[vr1 - 1])))
+    const v2 = project(persp(rotate(verticies[vr2 - 1])))
+    const v3 = project(persp(rotate(verticies[vr3 - 1])))
 
     const color = [pink, white, green, red, blue, yellow][Math.floor(Math.random() * 6)]
 
@@ -155,7 +163,7 @@ const putPixel = (vertex) => {
     setPixel(v[0], v[1], white)
 }
 
-let rotation = 1.0
+let rotation = Math.PI / 6
 let verticies, faces
 
 const draw = () => {
