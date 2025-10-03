@@ -1,4 +1,5 @@
 import { Vec2, Vec3, Matrix3, vecMat3 } from './math.js'
+import { makeViewport, makePerspective, lookAt } from './gl.js'
 
 console.time('full')
 const width = 512
@@ -28,6 +29,16 @@ bufferCanvas.style.imageRendering = 'pixelated'
 //     imageData.data[i + 2] = 0;
 //     imageData.data[i + 3] = 255;
 // }
+
+const eye = new Vec3(-1,0,2) // camera position
+const center = new Vec3(0,0,0)  // camera direction
+const up = new Vec3(0,1,0)  // camera up vector
+
+let perspective = makePerspective(eye.sub(center).normalize()[0])
+let modelView = lookAt(eye, center, up)
+let viewport = makeViewport(width / 16, height / 16, width * 7 / 8, height * 7 / 8)
+
+console.log(perspective, modelView, viewport, eye.sub(center).normalize())
 
 // int 8 array doesn't work (for our examples) because we end up too close to the cam and Int8Array are signed ints
 const zBuffer = new Int16Array(width * height)
