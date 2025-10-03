@@ -1,4 +1,4 @@
-import { Vec2, Vec3 } from './math.js'
+import { Vec2, Vec3, Matrix3, vecMat3 } from './math.js'
 
 console.time('full')
 const width = 512
@@ -89,12 +89,11 @@ const parseObj = (obj) => {
     }
 }
 
-// const rotate = (point) => {
-//     const a = Math.PI / 6;
-//     const ry = new Matrix3(Math.cos(a),0,Math.sin(a), 0,1,0, -Math.sin(a),0,Math.cos(a))
-//     return ry * point;
-//     // return point
-// }
+const rotate = (point) => {
+    // const a = Math.PI / 6
+    const ry = new Matrix3(Math.cos(rotation),0,Math.sin(rotation), 0,1,0, -Math.sin(rotation),0,Math.cos(rotation))
+    return vecMat3(point, ry)
+}
 
 const project = (point) => {
     // normalize and scale
@@ -142,9 +141,9 @@ const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color, forZBuffer) => 
 
 const drawFace = (verticies, [vr1, vr2, vr3], zBuffer = false) => {
     // - 1 because the verticies are 1-indexed, not 0
-    const v1 = project(verticies[vr1 - 1])
-    const v2 = project(verticies[vr2 - 1])
-    const v3 = project(verticies[vr3 - 1])
+    const v1 = project(rotate(verticies[vr1 - 1]))
+    const v2 = project(rotate(verticies[vr2 - 1]))
+    const v3 = project(rotate(verticies[vr3 - 1]))
 
     const color = [pink, white, green, red, blue, yellow][Math.floor(Math.random() * 6)]
 
@@ -156,25 +155,44 @@ const putPixel = (vertex) => {
     setPixel(v[0], v[1], white)
 }
 
+let rotation = 1.0
+let verticies, faces
+
+const draw = () => {
+    // console.time('put')
+    for (let i = 0; i < imageData.data.length; i++) {
+        imageData.data[i] = 0
+        bufferData.data[i] = 0
+    }
+
+    zBuffer.fill(0) // clear zBuffer
+    faces.map((face) => drawFace(verticies, face))
+    zBuffer.fill(0) // clear zBuffer
+    faces.map((face) => drawFace(verticies, face, true))
+
+    ctx.putImageData(imageData, 0, 0)
+    ctx2.putImageData(bufferData, 0, 0)
+    // console.timeEnd('put')
+
+    // console.timeEnd('full')
+
+    setTimeout(() => {
+        rotation += 0.1
+        draw()
+    }, 100)
+}
+
 window.onload = async () => {
     const answer = await fetch('./african-head.obj')
     const text = await answer.text()
 
     console.time('parse')
-    const { verticies, faces } = parseObj(text)
+    // const { verticies, faces } = parseObj(text)
+    const obj = parseObj(text)
+    verticies = obj.verticies
+    faces = obj.faces
     console.timeEnd('parse')
     console.log(verticies, faces)
 
-    faces.map((face) => drawFace(verticies, face))
-    zBuffer.fill(0) // clear zBuffer
-    faces.map((face) => drawFace(verticies, face, true))
-
-    // verticies.forEach(putPixel)
-
-    console.time('put')
-    ctx.putImageData(imageData, 0, 0)
-    ctx2.putImageData(bufferData, 0, 0)
-    console.timeEnd('put')
-
-    console.timeEnd('full')
+    draw()
 }
