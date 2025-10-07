@@ -78,6 +78,74 @@ export class Matrix4 {
         this.m32 = m32
         this.m33 = m33
     }
+
+	multmat (m) {
+		return new Matrix4(this.m00 * m.m00
+			+ this.m10 * m.m01
+			+ this.m20 * m.m02
+			+ this.m30 * m.m03, this.m00 * m.m10
+			+ this.m10 * m.m11
+			+ this.m20 * m.m12
+			+ this.m30 * m.m13,
+			this.m00 * m.m20
+			+ this.m10 * m.m21
+			+ this.m20 * m.m22
+			+ this.m30 * m.m23, this.m00 * m.m30
+			+ this.m10 * m.m31
+			+ this.m20 * m.m32
+			+ this.m30 * m.m33,
+			this.m01 * m.m00
+			+ this.m11 * m.m01
+			+ this.m21 * m.m02
+			+ this.m31 * m.m03, this.m01 * m.m10
+			+ this.m11 * m.m11
+			+ this.m21 * m.m12
+			+ this.m31 * m.m13,
+			this.m01 * m.m20
+			+ this.m11 * m.m21
+			+ this.m21 * m.m22
+			+ this.m31 * m.m23, this.m01 * m.m30
+			+ this.m11 * m.m31
+			+ this.m21 * m.m32
+			+ this.m31 * m.m33,
+			this.m02 * m.m00
+			+ this.m12 * m.m01
+			+ this.m22 * m.m02
+			+ this.m32 * m.m03, this.m02 * m.m10
+			+ this.m12 * m.m11
+			+ this.m22 * m.m12
+			+ this.m32 * m.m13,
+			this.m02 * m.m20
+			+ this.m12 * m.m21
+			+ this.m22 * m.m22
+			+ this.m32 * m.m23, this.m02 * m.m30
+			+ this.m12 * m.m31
+			+ this.m22 * m.m32
+			+ this.m32 * m.m33,
+			this.m03 * m.m00
+			+ this.m13 * m.m01
+			+ this.m23 * m.m02
+			+ this.m33 * m.m03, this.m03 * m.m10
+			+ this.m13 * m.m11
+			+ this.m23 * m.m12
+			+ this.m33 * m.m13,
+			this.m03 * m.m20
+			+ this.m13 * m.m21
+			+ this.m23 * m.m22
+			+ this.m33 * m.m23, this.m03 * m.m30
+			+ this.m13 * m.m31
+			+ this.m23 * m.m32
+			+ this.m33 * m.m33)
+	}
+
+    multvec(value) {
+		var product = new Vector4()
+		product.x = this.m00 * value.x + this.m10 * value.y + this.m20 * value.z + this.m30 * value.w
+		product.y = this.m01 * value.x + this.m11 * value.y + this.m21 * value.z + this.m31 * value.w
+		product.z = this.m02 * value.x + this.m12 * value.y + this.m22 * value.z + this.m32 * value.w
+		product.w = this.m03 * value.x + this.m13 * value.y + this.m23 * value.z + this.m33 * value.w
+		return product;
+	}
 }
 
 // multiply the vec3 by the matrix
