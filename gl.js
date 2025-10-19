@@ -10,15 +10,38 @@ export const makePerspective = (f) => {
 }
 
 export const lookAt = (eye, at, up) => {
-  var zaxis = at.sub(eye).normalize()
-  var xaxis = zaxis.cross(up).normalize()
-  var yaxis = xaxis.cross(zaxis)
+  // var zaxis = at.sub(eye).normalize()
+  // var xaxis = zaxis.cross(up).normalize()
+  // var yaxis = xaxis.cross(zaxis)
+
+  // return (new Matrix4(
+  //   xaxis.x, xaxis.y, xaxis.z, -xaxis.dot(eye),
+  //   yaxis.x, yaxis.y, yaxis.z, -yaxis.dot(eye),
+  //   -zaxis.x, -zaxis.y, -zaxis.z, zaxis.dot(eye),
+  //   0, 0, 0, 1
+  // )).multmat(new Matrix4(
+  //   1,0,0,-at.x,
+  //   0,1,0,-at.y,
+  //   0,0,1,-at.z,
+  //   0,0,0,1
+  // ))
+  // var zaxis = at.sub(eye).normalize()
+  // var xaxis = zaxis.cross(up).normalize()
+  // var yaxis = xaxis.cross(zaxis)
+
+  var n = at.sub(eye).normalize()
+  var l = up.cross(n).normalize()
+  var m = n.cross(l).normalize()
 
   return (new Matrix4(
-    xaxis.x, xaxis.y, xaxis.z, -xaxis.dot(eye),
-    yaxis.x, yaxis.y, yaxis.z, -yaxis.dot(eye),
-    -zaxis.x, -zaxis.y, -zaxis.z, zaxis.dot(eye),
-    0, 0, 0, 1
+    l.x,l.y,l.z,0,
+    m.x,m.y,m.z,0,
+    n.x,n.y,n.z,0,
+    0,0,0,1
+    // xaxis.x, xaxis.y, xaxis.z, -xaxis.dot(eye),
+    // yaxis.x, yaxis.y, yaxis.z, -yaxis.dot(eye),
+    // -zaxis.x, -zaxis.y, -zaxis.z, zaxis.dot(eye),
+    // 0, 0, 0, 1
   )).multmat(new Matrix4(
     1,0,0,-at.x,
     0,1,0,-at.y,

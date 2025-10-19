@@ -45,6 +45,19 @@ export class Vec3 {
 	}
 }
 
+export class Vec4 {
+    constructor (x, y, z, w) {
+        this.x = x
+        this.y = y
+        this.z = z
+        this.w = w
+    }
+
+    mult (val) {
+        return new Vec4(this.x * val, this.y * val, this.z * val, this.w * val)
+    }
+}
+
 export class Matrix3 {
     constructor (m00, m01, m02, m10, m11, m12, m20, m21, m22) {
         this.m00 = m00
@@ -57,6 +70,54 @@ export class Matrix3 {
         this.m21 = m21
         this.m22 = m22
     }
+
+	multvec(value) {
+		var w = this.m02 * value.x + this.m12 * value.y + this.m22 * 1
+		var x = (this.m00 * value.x + this.m10 * value.y + this.m20 * 1) / w
+		var y = (this.m01 * value.x + this.m11 * value.y + this.m21 * 1) / w
+		return new Vec2(x, y)
+	}
+
+	cofactor(m0, m1, m2, m3) {
+		return m0 * m3 - m1 * m2
+	}
+
+    determinant () {
+		const c00 = this.cofactor(this.m11, this.m21, this.m12, this.m22)
+		const c01 = this.cofactor(this.m10, this.m20, this.m12, this.m22)
+		const c02 = this.cofactor(this.m10, this.m20, this.m11, this.m21)
+		return this.m00 * c00 - this.m01 * c01 + this.m02 * c02
+	}
+
+	inverse () {
+		const c00 = this.cofactor(this.m11, this.m21, this.m12, this.m22)
+		const c01 = this.cofactor(this.m10, this.m20, this.m12, this.m22)
+		const c02 = this.cofactor(this.m10, this.m20, this.m11, this.m21)
+
+		const det = this.m00 * c00 - this.m01 * c01 + this.m02 * c02
+		if (Math.abs(det) < 0.000001) {
+			throw "determinant is too small"
+		}
+
+		const c10 = this.cofactor(this.m01, this.m21, this.m02, this.m22)
+		const c11 = this.cofactor(this.m00, this.m20, this.m02, this.m22)
+		const c12 = this.cofactor(this.m00, this.m20, this.m01, this.m21)
+
+		const c20 = this.cofactor(this.m01, this.m11, this.m02, this.m12)
+		const c21 = this.cofactor(this.m00, this.m10, this.m02, this.m12)
+		const c22 = this.cofactor(this.m00, this.m10, this.m01, this.m11)
+
+		const invdet = 1.0 / det
+		return new Matrix3(
+            c00 * invdet, -c01 * invdet, c02 * invdet,
+            -c10 * invdet, c11 * invdet, -c12 * invdet,
+            c20 * invdet, -c21 * invdet, c22 * invdet
+        )
+	}
+
+	transpose() {
+        return new Matrix3(this.m00, this.m01, this.m02, this.m10, this.m11, this.m12, this.m20, this.m21, this.m22)
+	}
 }
 
 export class Matrix4 {
@@ -139,7 +200,7 @@ export class Matrix4 {
 	}
 
     multvec(value) {
-		var product = new Vector4()
+		var product = new Vec4()
 		product.x = this.m00 * value.x + this.m10 * value.y + this.m20 * value.z + this.m30 * value.w
 		product.y = this.m01 * value.x + this.m11 * value.y + this.m21 * value.z + this.m31 * value.w
 		product.z = this.m02 * value.x + this.m12 * value.y + this.m22 * value.z + this.m32 * value.w

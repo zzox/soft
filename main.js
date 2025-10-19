@@ -1,4 +1,4 @@
-import { Vec2, Vec3, Matrix3, vecMat3 } from './math.js'
+import { Vec2, Vec3, Matrix3, vecMat3, Vec4 } from './math.js'
 import { makeViewport, makePerspective, lookAt } from './gl.js'
 
 console.time('full')
@@ -34,7 +34,7 @@ const eye = new Vec3(-1,0,2) // camera position
 const center = new Vec3(0,0,0)  // camera direction
 const up = new Vec3(0,1,0)  // camera up vector
 
-let perspective = makePerspective(eye.sub(center).normalize()[0])
+let perspective = makePerspective(-1)
 let modelView = lookAt(eye, center, up)
 let viewport = makeViewport(width / 16, height / 16, width * 7 / 8, height * 7 / 8)
 
@@ -116,36 +116,68 @@ const persp = (point) => {
 
 const project = (point) => {
     // normalize and scale
-    return new Vec3(Math.floor((point.x + 1) * width / 2), Math.floor((point.y + 1) * height / 2), Math.floor((point.z + 1) * 255 / 2))
+    // return new Vec4(Math.floor((point.x + 1) * width / 2), Math.floor((point.y + 1) * height / 2), Math.floor((point.z + 1) * 255 / 2), 1.0)
+    return new Vec4(point.x, point.y, point.z, 1.0)
 }
 
 const signedTriangleArea = (x1, y1, x2, y2, x3, y3) => {
     return .5 * ((y2 - y1) * (x2 + x1) + (y3 - y2) * (x3 + x2) + (y1 - y3) * (x1 + x3));
 }
 
-const drawTriangle = (x1, y1, z1, x2, y2, z2, x3, y3, z3, color, forZBuffer) => {
-    const minX = Math.min(Math.min(x1, x2), x3)
-    const maxX = Math.max(Math.max(x1, x2), x3)
-    const minY = Math.min(Math.min(y1, y2), y3)
-    const maxY = Math.max(Math.max(y1, y2), y3)
+const rasterize = (clip, color, forZBuffer) => {
+    // normalized device coordinates
+    const ndc = [clip[0].mult(1 / clip[0].w), clip[1].mult(1 / clip[1].w), clip[2].mult(1 / clip[2].w)]
+    const s1 = viewport.multvec(ndc[0])
+    const s2 = viewport.multvec(ndc[1])
+    const s3 = viewport.multvec(ndc[2])
+    const screen = [{ x: s1.x, y: s1.y }, { x: s2.x, y: s2.y }, { x: s3.x, y: s3.y }]
 
-    const totalArea = signedTriangleArea(x1, y1, x2, y2, x3, y3)
-    // console.log(totalArea)
-    if (totalArea < 1) return // backface culling + discarding triangles that cover less than a pixel
+    const abc = new Matrix3(screen[0].x, screen[0].y, 1, screen[1].x, screen[1].y, 1, screen[2].x, screen[2].y, 1)
+    if (abc.determinant() < 1) return
+
+    const minX = Math.floor(Math.min(Math.min(screen[0].x, screen[1].x), screen[2].x))
+    const maxX = Math.floor(Math.max(Math.max(screen[0].x, screen[1].x), screen[2].x))
+    const minY = Math.floor(Math.min(Math.min(screen[0].y, screen[1].y), screen[2].y))
+    const maxY = Math.floor(Math.max(Math.max(screen[0].y, screen[1].y), screen[2].y))
+
+    // const totalArea = signedTriangleArea(clip[0].x, clip[0].y, clip[1].x, clip[1].y, clip[2].x, clip[2].y)
+    if (Math.random() < 0.01) {
+        console.log(clip, ndc, screen)
+    }
+    // if (abc < 1) return // backface culling + discarding triangles that cover less than a pixel
+
+    // console.log('tri')
+
+    // if (Math.random() < 0.01) {
+    //     console.log(minX, minY, maxX, maxY)
+    // }
 
     for (let x = minX; x <= maxX; x++) {
-        for (let y = minY; y <= maxY; y++) {
-            const alpha = signedTriangleArea(x, y, x2, y2, x3, y3) / totalArea
-            const beta = signedTriangleArea(x, y, x3, y3, x1, y1) / totalArea
-            const gamma = signedTriangleArea(x, y, x1, y1, x2, y2) / totalArea
-            if (alpha < 0 || beta < 0 || gamma < 0) continue
-            const z = Math.floor(alpha * z1 + beta * z2 + gamma * z3)
+        for (let y = minY + 128; y <= maxY + 128; y++) {
+    // for (let x = Math.max(minX, 0); x <= Math.min(maxX, width - 1); x++) {
+    //     for (let y = Math.max(minY, 0); y <= Math.min(maxY, height - 1); y++) {
+            // const alpha = signedTriangleArea(x, y, clip[1].x, clip[1].y, clip[2].x, clip[2].y) / totalArea
+            // const beta = signedTriangleArea(x, y, clip[2].x, clip[2].y, clip[0].x, clip[0].y) / totalArea
+            // const gamma = signedTriangleArea(x, y, clip[0].x, clip[0].y, clip[1].x, clip[1].y) / totalArea
+            // if (alpha < 0 || beta < 0 || gamma < 0) continue
+            // const z = Math.floor(alpha * clip[0].z + beta * clip[1].z + gamma * clip[2].z)
+
+            const bc = abc.inverse().transpose().multvec(new Vec2(x, y))
+
+            // if (Math.random() < 0.001) {
+            //     console.log(bc)
+            // }
+
+            if (bc.x<0 || bc.y<0 || bc.z<0) continue                               // negative barycentric coordinate => the pixel is outside the triangle
+            const z = bc.x * ndc[0].z + bc.y * ndc[1].z + bc.y * ndc[2].z
+
             color[3] = z
             // colorful triangle
             // setPixel(x, y, [Math.floor(255 * alpha), Math.floor(255 * beta), Math.floor(255 * gamma), 255])
-            // console.log(x, y)
 
             if (z <= getZBuffer(x, y)) continue
+
+            // console.log(Math.floor(x), Math.floor(y), color)
 
             setZBuffer(x, y, z)
             if (forZBuffer) {
@@ -185,9 +217,60 @@ const draw = () => {
     }
 
     zBuffer.fill(0) // clear zBuffer
-    faces.map((face) => drawFace(verticies, face))
+    faces.map((face) => {
+
+        const clip = [0, 1, 2].map(i => {
+            const v = verticies[face[i] - 1]
+
+            // console.log(v, perspective, modelView, perspective.multmat(modelView).multvec(project(v)))
+            // console.log(perspective.multmat(modelView), perspective.multmat(modelView).multvec(new Vec4(v.x * 255, v.y * 255, v.z * 255, 1)))
+            // return new Vec4(Math.floor(v.x * 255), Math.floor(v.y * 255), Math.floor(v.z * 255), 1)
+            // console.log(project(v.x, v.y, v.z), v.x)
+            return perspective.multmat(modelView).multvec(project(v))
+            // return project(v)
+
+
+
+            // const v1 = project(persp(rotate(verticies[vr1 - 1])))
+            // const v2 = project(persp(rotate(verticies[vr2 - 1])))
+            // const v3 = project(persp(rotate(verticies[vr3 - 1])))
+
+            // verticies[vr1 - 1]
+            // verticies[vr2 - 1]
+            // verticies[vr3 - 1]
+        })
+        //     vec4 clip[3];
+        //     for (int d : {0,1,2}) {            // assemble the primitive
+        //         vec3 v = model.vert(i, d);
+        //         clip[d] = Projection * ModelView * vec4{v.x, v.y, v.z, 1.};
+        //     }
+        //     TGAColor rnd;
+        //     for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
+        //     rasterize(clip, zbuffer, framebuffer, rnd); // rasterize the primitive
+        // }
+        // - 1 because the verticies are 1-indexed, not 0
+
+        // const v1 = project(persp(rotate(verticies[face[0] - 1])))
+        // const v2 = project(persp(rotate(verticies[face[1] - 1])))
+        // const v3 = project(persp(rotate(verticies[face[2] - 1])))
+
+        const color = [pink, white, green, red, blue, yellow][Math.floor(Math.random() * 6)]
+
+        rasterize(clip, color, false)
+        // rasterize(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, color, false)
+        // drawFace(verticies, face)
+    })
     zBuffer.fill(0) // clear zBuffer
-    faces.map((face) => drawFace(verticies, face, true))
+    faces.map((face) => {
+        // const v1 = project(persp(rotate(verticies[face[0] - 1])))
+        // const v2 = project(persp(rotate(verticies[face[1] - 1])))
+        // const v3 = project(persp(rotate(verticies[face[2] - 1])))
+
+        // const color = [pink, white, green, red, blue, yellow][Math.floor(Math.random() * 6)]
+
+        // rasterize(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, color, true)
+        // drawFace(verticies, face, true)
+    })
 
     ctx.putImageData(imageData, 0, 0)
     ctx2.putImageData(bufferData, 0, 0)
@@ -197,7 +280,7 @@ const draw = () => {
 
     setTimeout(() => {
         rotation += 0.1
-        draw()
+        // draw()
     }, 100)
 }
 
